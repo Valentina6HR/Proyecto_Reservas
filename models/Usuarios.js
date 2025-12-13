@@ -1,0 +1,76 @@
+import { DataTypes } from "sequelize";
+import bcrypt from "bcrypt";
+import db from "../config/db.js";
+
+const Usuario = db.define(
+    "usuarios",
+    {
+        nombre: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
+
+        password: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+
+        rol: {
+            type: DataTypes.ENUM("admin", "recepcionista", "mesero", "cliente"),
+            allowNull: false,
+        },
+
+        telefono: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+        notas: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+
+        estado: {
+            type: DataTypes.ENUM("activo", "inactivo"),
+            defaultValue: "activo",
+        },
+
+        token: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+    },
+    {
+        hooks: {
+            beforeSave: async (usuario) => {
+                if (usuario.changed("password")) {
+                    console.log("Hook beforeSave: Hasheando password...");
+                    console.log("Password antes de hashear:", usuario.password.substring(0, 10) + "...");
+                    const salt = await bcrypt.genSalt(10);
+                    usuario.password = await bcrypt.hash(usuario.password, salt);
+                    console.log("Password hasheado:", usuario.password.substring(0, 20) + "...");
+                }
+            },
+        },
+        scopes: {
+            eliminarPassword: {
+                attributes: {
+                    exclude: ["password", "createdAt", "updatedAt"],
+                },
+            },
+        },
+    }
+);
+
+// Metodo Personalizado
+Usuario.prototype.verificarPassword = function (password) {
+    return bcrypt.compareSync(password, this.password);
+};
+
+export default Usuario;
