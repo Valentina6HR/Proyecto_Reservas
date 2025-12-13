@@ -1,0 +1,113 @@
+doctype html
+html(lang="es" style="overflow-x: hidden;")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Ristorante Traditionale | #{pagina}
+        link(href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet")
+        link(rel="stylesheet", href="/css/style.css")
+        link(href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet")
+    body.min-h-screen.bg-crema.text-carbon.font-sans(style="overflow-x: hidden; max-width: 100vw;")
+        nav.bg-vino.p-4.shadow-lg.relative.z-50
+            .container.mx-auto.flex.justify-between.items-center
+                a.text-2xl.text-dorado.font-serif.font-bold(href="/") Ristorante Tradizionale
+                
+                //- Desktop Menu
+                div(class="hidden lg:flex items-center gap-4")
+                    a.bg-dorado.text-vino.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors(href="/reservas") Pedir Reserva
+                    if usuario
+                        //- Usuario autenticado
+                        .flex.items-center.gap-4
+                            //- Enlace al Panel Admin (solo para admin y recepcionista)
+                            if usuario.rol === "admin" || usuario.rol === "recepcionista"
+                                a.bg-oliva.text-crema.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors.flex.items-center.gap-2(href="/panel/admin")
+                                    svg.w-4.h-4(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                        path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z")
+                                        path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z")
+                                    | Panel Admin
+                            //- Enlace a Mis Reservas (para todos los usuarios autenticados)
+                            a.text-crema.font-bold.hover_text-dorado.transition-colors.flex.items-center.gap-2(href="/mis-reservas")
+                                svg.w-4.h-4(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z")
+                                | Mis Reservas
+                            span.text-crema.font-bold Bienvenido, #{usuario.nombre}
+                            a.bg-dorado.text-vino.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors(href="/auth/cerrar-sesion") Cerrar Sesión
+                    else
+                        //- Usuario no autenticado
+                        a.text-crema.mr-4.font-bold.hover_text-dorado.transition-colors(href="/auth/login") Iniciar Sesión
+                        a.text-crema.font-bold.hover_text-dorado.transition-colors(href="/auth/registro") Registrarse
+
+                //- Hamburger Button
+                button#menu-btn(class="hamburger block lg:hidden focus:outline-none" type="button")
+                    span
+                    span
+                    span
+
+            //- Mobile Menu
+            div#mobile-menu(class="hidden absolute top-full left-0 w-full bg-vino shadow-lg flex-col items-center py-8 space-y-6 lg:hidden z-40")
+                a.bg-dorado.text-vino.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors.w-3_4.text-center(href="/reservas") Pedir Reserva
+                if usuario
+                    //- Enlace al Panel Admin en móvil (solo para admin y recepcionista)
+                    if usuario.rol === "admin" || usuario.rol === "recepcionista"
+                        a.bg-oliva.text-crema.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors.w-3_4.text-center.flex.items-center.justify-center.gap-2(href="/panel/admin")
+                            svg.w-4.h-4(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z")
+                                path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z")
+                            | Panel Admin
+                    //- Enlace a Mis Reservas en móvil
+                    a.text-crema.font-bold.hover_text-dorado.transition-colors.text-xl.flex.items-center.gap-2(href="/mis-reservas")
+                        svg.w-5.h-5(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z")
+                        | Mis Reservas
+                    span.text-crema.font-bold.text-xl Bienvenido, #{usuario.nombre}
+                    a.bg-dorado.text-vino.px-4.py-2.rounded.font-bold.hover_bg-opacity-90.transition-colors.w-3_4.text-center(href="/auth/cerrar-sesion") Cerrar Sesión
+                else
+                    a.text-crema.font-bold.hover_text-dorado.transition-colors.text-xl(href="/auth/login") Iniciar Sesión
+                    a.text-crema.font-bold.hover_text-dorado.transition-colors.text-xl(href="/auth/registro") Registrarse
+
+        //- Mensajes Flash
+        if mensajes
+            if mensajes.error && mensajes.error.length > 0
+                .flash-messages.container.mx-auto.px-2.mt-4
+                    each error in mensajes.error
+                        .flash-message.flash-error.bg-white.border-l-4.border-vino.p-3.rounded.shadow-lg.mb-2(data-aos="fade-down")
+                            .flex.items-center.gap-2
+                                svg.w-5.h-5.text-vino(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+                                span.text-vino.font-medium.text-sm= error
+            
+            if mensajes.exito && mensajes.exito.length > 0
+                .flash-messages.container.mx-auto.px-2.mt-4
+                    each exito in mensajes.exito
+                        .flash-message.flash-success.bg-white.border-l-4.border-green-500.p-3.rounded.shadow-lg.mb-2(data-aos="fade-down")
+                            .flex.items-center.gap-2
+                                svg.w-5.h-5.text-green-700(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z")
+                                span.text-green-700.font-medium.text-sm= exito
+
+        main.overflow-hidden(class="mx-auto container mt-10 px-2" style="overflow-x: hidden;")
+            block contenido
+        
+        script(src="https://unpkg.com/aos@2.3.1/dist/aos.js")
+        script.
+            AOS.init();
+            
+            const btn = document.getElementById('menu-btn');
+            const nav = document.getElementById('mobile-menu');
+
+            if(btn && nav) {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('open');
+                    nav.classList.toggle('hidden');
+                });
+            }
+            
+            // Auto-hide flash messages after 5 seconds
+            setTimeout(() => {
+                const flashMessages = document.querySelectorAll('.flash-message');
+                flashMessages.forEach(msg => {
+                    msg.style.transition = 'opacity 0.5s ease';
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                });
+            }, 5000);

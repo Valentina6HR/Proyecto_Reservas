@@ -1,0 +1,438 @@
+extends layout/index
+include mixins/errores
+
+block contenido
+    +mostrarErrores(errores)
+    
+    // Reservation Form Section
+    section.py-12.min-h-screen.flex.items-center.justify-center.bg-gray-50
+        .container.mx-auto.px-4.max-w-6xl
+            .relative.w-full(data-aos="fade-up" data-aos-duration="1000")
+                
+                //- Tarjeta Principal con efecto de cristal y sombra profunda
+                div(class="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row" style="min-height: 600px;")
+                    
+                    //- Columna Izquierda (Imagen Decorativa)
+                    div(class="hidden lg:block lg:w-5/12 relative overflow-hidden")
+                        //- Imagen de fondo con overlay
+                        div(class="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-110" style="background-image: url('/img/reserva.png');")
+                        div.absolute.inset-0(style="background: linear-gradient(to bottom, rgba(110, 24, 37, 0.7), rgba(60, 68, 48, 0.8));")
+                        
+                        //- Contenido sobre la imagen
+                        div.relative.z-10.h-full.flex.flex-col.justify-center.p-12.text-crema
+                            div.mb-8
+                                img(src="/img/escudo_restaurante.svg" alt="Logo" class="w-24 h-24 mb-6 opacity-90")
+                                h3.text-4xl.font-serif.font-bold.mb-4.text-dorado Experiencia Italiana
+                                div.w-16.h-1.bg-dorado.mb-6
+                                p.font-sans.text-lg.leading-relaxed.opacity-90
+                                    | "La cocina es el corazón de la casa". Permítenos deleitarte con los sabores tradicionales de nuestra tierra en un ambiente inigualable.
+                            
+                            div.mt-auto.space-y-4
+                                .flex.items-center.space-x-4
+                                    div.w-10.h-10.rounded-full.bg-dorado.bg-opacity-20.flex.items-center.justify-center
+                                        span.text-xl 📍
+                                    div
+                                        p.text-xs.uppercase.tracking-widest.text-dorado Ubicación
+                                        p.font-medium Via Roma 123, Ciudad
+
+                    //- Columna Derecha (Formulario)
+                    div(class="w-full lg:w-7/12 bg-crema p-8 lg:p-16 relative")
+                        //- Decoración de fondo sutil
+                        div.absolute.top-0.right-0.w-64.h-64.bg-dorado.opacity-5.rounded-bl-full.pointer-events-none
+                        
+                        div.relative.z-10
+                            h2(class="text-4xl font-serif text-vino mb-2 font-bold") Reserva tu Mesa
+                            p(class="text-carbon opacity-70 mb-10 font-sans") Completa el formulario para asegurar tu velada perfecta.
+
+                            form#reservaForm(action="/reservas" method="POST" class="space-y-8")
+                                input(type="hidden" name="_csrf" value=csrfToken)
+                                input#canal(type="hidden" name="canal" value="web")
+                                input#dispositivo(type="hidden" name="dispositivo" value="desktop")
+                                
+                                //- Grid para inputs compactos
+                                div(class="grid grid-cols-1 md:grid-cols-2 gap-8")
+                                    //- Nombre
+                                    .group.relative
+                                        input#nombre(type="text" name="nombre" placeholder=" " class="peer w-full bg-transparent border-b-2 border-gray-400 py-3 text-carbon focus:border-vino focus:outline-none transition-colors font-serif text-lg placeholder-transparent")
+                                        label(for="nombre" class="absolute left-0 -top-3.5 text-sm text-vino font-bold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-vino") Nombre Completo *
+                                    
+                                    //- Email
+                                    .group.relative
+                                        input#email(type="email" name="email" placeholder=" " class="peer w-full bg-transparent border-b-2 border-gray-400 py-3 text-carbon focus:border-vino focus:outline-none transition-colors font-serif text-lg placeholder-transparent")
+                                        label(for="email" class="absolute left-0 -top-3.5 text-sm text-vino font-bold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-vino") Correo Electrónico *
+
+                                div(class="grid grid-cols-1 md:grid-cols-2 gap-8")
+                                    //- Teléfono
+                                    .group.relative
+                                        input#telefono(type="tel" name="telefono" placeholder=" " pattern="[0-9]+" class="peer w-full bg-transparent border-b-2 border-gray-400 py-3 text-carbon focus:border-vino focus:outline-none transition-colors font-serif text-lg placeholder-transparent")
+                                        label(for="telefono" class="absolute left-0 -top-3.5 text-sm text-vino font-bold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-vino") Teléfono *
+                                    
+                                    //- Número de personas
+                                    .group.relative
+                                        input#numero_personas(type="number" name="numero_personas" min="1" max="8" value="2" placeholder=" " class="peer w-full bg-transparent border-b-2 border-gray-400 py-3 text-carbon focus:border-vino focus:outline-none transition-colors font-serif text-lg placeholder-transparent")
+                                        label(for="numero_personas" class="absolute left-0 -top-3.5 text-sm text-vino font-bold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-vino") Personas (1-8) *
+
+                                div(class="grid grid-cols-1 md:grid-cols-2 gap-8")
+                                    //- Fecha
+                                    .group.relative
+                                        label(for="fecha_reserva" class="block text-xs font-bold text-vino uppercase tracking-widest mb-2") Fecha *
+                                        input#fecha_reserva(type="date" name="fecha_reserva" class="w-full bg-white bg-opacity-50 border border-gray-300 rounded-lg px-4 py-3 text-carbon focus:border-vino focus:ring-1 focus:ring-vino outline-none transition-all font-serif")
+                                    
+                                    //- Hora
+                                    .group.relative
+                                        label(for="hora_inicio" class="block text-xs font-bold text-vino uppercase tracking-widest mb-2") Hora *
+                                        input#hora_inicio(type="time" name="hora_inicio" step="1800" class="w-full bg-white bg-opacity-50 border border-gray-300 rounded-lg px-4 py-3 text-carbon focus:border-vino focus:ring-1 focus:ring-vino outline-none transition-all font-serif")
+                                        //- Mensaje de horario
+                                        p#horario-info.text-xs.text-gray-500.mt-1.italic Selecciona una fecha para ver el horario disponible
+                                
+                                //- Selector de Zona
+                                .group.relative
+                                    label(class="block text-xs font-bold text-vino uppercase tracking-widest mb-4") Zona de preferencia *
+                                    .grid.grid-cols-2.gap-3#zona-selector
+                                        label.zona-option.cursor-pointer
+                                            input(type="radio" name="zona" value="interior" class="hidden peer")
+                                            .zona-card.flex.items-center.gap-3.p-3.rounded-lg.border-2.border-gray-300.bg-white.bg-opacity-50.transition-all        
+                                                span.font-serif.text-carbon Interior
+                                        label.zona-option.cursor-pointer
+                                            input(type="radio" name="zona" value="terraza" class="hidden peer")
+                                            .zona-card.flex.items-center.gap-3.p-3.rounded-lg.border-2.border-gray-300.bg-white.bg-opacity-50.transition-all
+                                                span.font-serif.text-carbon Terraza
+                                        label.zona-option.cursor-pointer
+                                            input(type="radio" name="zona" value="barra" class="hidden peer")
+                                            .zona-card.flex.items-center.gap-3.p-3.rounded-lg.border-2.border-gray-300.bg-white.bg-opacity-50.transition-all
+                                                span.font-serif.text-carbon Barra
+                                        label.zona-option.cursor-pointer
+                                            input(type="radio" name="zona" value="privado" class="hidden peer")
+                                            .zona-card.flex.items-center.gap-3.p-3.rounded-lg.border-2.border-gray-300.bg-white.bg-opacity-50.transition-all
+                                                span.font-serif.text-carbon Privado
+                                
+                                //- Observaciones
+                                .group.relative
+                                    textarea#observaciones(name="observaciones" rows="3" placeholder=" " class="peer w-full bg-transparent border-b-2 border-gray-400 py-3 text-carbon focus:border-vino focus:outline-none transition-colors font-serif text-lg placeholder-transparent resize-none")
+                                    label(for="observaciones" class="absolute left-0 -top-3.5 text-sm text-vino font-bold transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-vino") Observaciones Especiales (Opcional)
+
+                                //- Botón Submit
+                                .pt-6
+                                    button#submitBtn(type="submit" class="w-full bg-vino text-crema font-bold py-4 px-8 rounded-lg hover:bg-opacity-90 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center justify-center group border border-dorado")
+                                        span.mr-3.tracking-widest CONFIRMAR RESERVA
+                                        span(class="text-xl group-hover:translate-x-2 transition-transform") ⟶
+                                
+                                //- Enlace a políticas
+                                .text-center.mt-4
+                                    button#btn-ver-politicas.text-sm.text-vino.underline.hover_text-dorado.transition-colors.cursor-pointer(type="button")
+                                        svg.w-4.h-4.inline-block.mr-1(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+                                        | Ver Políticas de Reserva
+
+    //- Modal de Políticas
+    #modal-politicas.fixed.inset-0.z-50.hidden.items-center.justify-center
+        //- Overlay
+        .modal-overlay.absolute.inset-0.bg-black.bg-opacity-50.backdrop-blur-sm
+        
+        //- Contenido del Modal
+        .modal-content.relative.bg-white.rounded-2xl.shadow-2xl.max-w-lg.w-full.mx-4.overflow-hidden.transform.transition-all(data-aos="zoom-in")
+            //- Header del modal
+            .bg-gradient-to-r.from-vino.to-red-800.text-white.px-6.py-5
+                .flex.justify-between.items-center
+                    .flex.items-center.gap-3
+                        svg.w-8.h-8(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z")
+                        div
+                            h3.text-xl.font-serif.font-bold Políticas de Reserva
+                            p.text-sm.text-crema.opacity-80 Términos y condiciones
+                    button#btn-cerrar-modal.text-white.hover_text-dorado.transition-colors.text-2xl.font-bold(type="button") ×
+
+            //- Cuerpo del modal
+            .p-6.space-y-4
+                //- Tiempo de cancelación
+                .flex.items-start.gap-4.p-4.bg-red-50.rounded-xl.border.border-red-100
+                    .w-12.h-12.rounded-full.bg-red-100.flex.items-center.justify-center.flex-shrink-0
+                        svg.w-6.h-6.text-red-600(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
+                    div
+                        h4.font-bold.text-gray-800 Tiempo de Cancelación
+                        p.text-sm.text-gray-600.mb-1 Puedes cancelar tu reserva hasta:
+                        p.text-lg.font-bold.text-red-600#politica-cancelacion -
+
+                //- Anticipación mínima
+                .flex.items-start.gap-4.p-4.bg-blue-50.rounded-xl.border.border-blue-100
+                    .w-12.h-12.rounded-full.bg-blue-100.flex.items-center.justify-center.flex-shrink-0
+                        svg.w-6.h-6.text-blue-600(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z")
+                    div
+                        h4.font-bold.text-gray-800 Anticipación Mínima
+                        p.text-sm.text-gray-600.mb-1 Debes reservar con al menos:
+                        p.text-lg.font-bold.text-blue-600#politica-anticipacion -
+
+                //- Máximo de personas
+                .flex.items-start.gap-4.p-4.bg-green-50.rounded-xl.border.border-green-100
+                    .w-12.h-12.rounded-full.bg-green-100.flex.items-center.justify-center.flex-shrink-0
+                        svg.w-6.h-6.text-green-600(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z")
+                    div
+                        h4.font-bold.text-gray-800 Máximo de Personas
+                        p.text-sm.text-gray-600.mb-1 Límite de comensales por reserva:
+                        p.text-lg.font-bold.text-green-600#politica-max-personas -
+
+                //- Duración
+                .flex.items-start.gap-4.p-4.bg-purple-50.rounded-xl.border.border-purple-100
+                    .w-12.h-12.rounded-full.bg-purple-100.flex.items-center.justify-center.flex-shrink-0
+                        svg.w-6.h-6.text-purple-600(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+                            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
+                    div
+                        h4.font-bold.text-gray-800 Duración Estimada
+                        p.text-sm.text-gray-600.mb-1 Tiempo aproximado de tu reserva:
+                        p.text-lg.font-bold.text-purple-600#politica-duracion -
+
+            //- Footer del modal
+            .bg-gray-50.px-6.py-4.border-t
+                button#btn-aceptar-politicas.w-full.bg-vino.text-white.py-3.rounded-lg.font-bold.hover_bg-opacity-90.transition-colors(type="button")
+                    | Entendido
+    //- Script para detección de dispositivo, fecha mínima y horarios
+    script.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Horarios de atención desde el servidor
+            const horariosAtencion = !{horarios || '[]'};
+            
+            // Políticas de reserva desde el servidor
+            const politicasReserva = !{politicas || '{}'};
+            
+            // Nombres de días para mostrar mensajes
+            const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            
+            // Detectar tipo de dispositivo
+            function detectDevice() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                const isMobile = /iphone|ipod|android.*mobile|windows phone|blackberry/.test(userAgent);
+                const isTablet = /ipad|android(?!.*mobile)|tablet/.test(userAgent);
+                
+                if (isMobile) return 'mobile';
+                if (isTablet) return 'tablet';
+                return 'desktop';
+            }
+            
+            // Establecer el dispositivo detectado
+            document.getElementById('dispositivo').value = detectDevice();
+            
+            // Establecer fecha mínima como hoy
+            const fechaInput = document.getElementById('fecha_reserva');
+            const horaInput = document.getElementById('hora_inicio');
+            const horarioInfo = document.getElementById('horario-info');
+            
+            const hoy = new Date();
+            const year = hoy.getFullYear();
+            const month = String(hoy.getMonth() + 1).padStart(2, '0');
+            const day = String(hoy.getDate()).padStart(2, '0');
+            const fechaMinima = year + '-' + month + '-' + day;
+            
+            fechaInput.setAttribute('min', fechaMinima);
+            
+            // Función para formatear hora (quitar segundos si los tiene)
+            function formatearHora(hora) {
+                if (!hora) return '';
+                const partes = hora.split(':');
+                return partes[0] + ':' + partes[1];
+            }
+            
+            // Función para actualizar restricciones de hora según el día seleccionado
+            function actualizarHorario() {
+                const fechaSeleccionada = fechaInput.value;
+                
+                if (!fechaSeleccionada) {
+                    horaInput.removeAttribute('min');
+                    horaInput.removeAttribute('max');
+                    horarioInfo.textContent = 'Selecciona una fecha para ver el horario disponible';
+                    horarioInfo.className = 'text-xs text-gray-500 mt-1 italic';
+                    horaInput.disabled = false;
+                    return;
+                }
+                
+                // Obtener el día de la semana (0 = Domingo, 1 = Lunes, etc.)
+                const fecha = new Date(fechaSeleccionada + 'T12:00:00'); // Añadir hora para evitar problemas de zona horaria
+                const diaSemana = fecha.getDay();
+                const nombreDia = nombresDias[diaSemana];
+                
+                // Buscar horario para ese día
+                const horarioDelDia = horariosAtencion.find(h => h.dia_semana === diaSemana);
+                
+                if (horarioDelDia) {
+                    const horaApertura = formatearHora(horarioDelDia.hora_apertura);
+                    const horaCierre = formatearHora(horarioDelDia.hora_cierre);
+                    
+                    horaInput.setAttribute('min', horaApertura);
+                    horaInput.setAttribute('max', horaCierre);
+                    horaInput.disabled = false;
+                    
+                    horarioInfo.innerHTML = '<span class="text-green-600 font-semibold">✓ ' + nombreDia + ':</span> Abierto de <strong>' + horaApertura + '</strong> a <strong>' + horaCierre + '</strong>';
+                    horarioInfo.className = 'text-xs text-green-700 mt-1';
+                    
+                    // Si hay una hora seleccionada fuera del rango, limpiarla
+                    if (horaInput.value) {
+                        if (horaInput.value < horaApertura || horaInput.value > horaCierre) {
+                            horaInput.value = '';
+                        }
+                    }
+                } else {
+                    // No hay horario configurado para ese día (restaurante cerrado)
+                    horaInput.removeAttribute('min');
+                    horaInput.removeAttribute('max');
+                    horaInput.value = '';
+                    horaInput.disabled = true;
+                    
+                    horarioInfo.innerHTML = '<span class="text-red-600 font-semibold">✗ ' + nombreDia + ':</span> El restaurante está cerrado este día';
+                    horarioInfo.className = 'text-xs text-red-600 mt-1 font-medium';
+                }
+            }
+            
+            // Actualizar horario cuando cambie la fecha
+            fechaInput.addEventListener('change', actualizarHorario);
+            
+            // Si ya hay una fecha seleccionada (por ejemplo, al volver con errores), actualizar
+            if (fechaInput.value) {
+                actualizarHorario();
+            }
+            
+            // ============ MODAL DE POLÍTICAS ============
+            const modalPoliticas = document.getElementById('modal-politicas');
+            const btnVerPoliticas = document.getElementById('btn-ver-politicas');
+            const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+            const btnAceptarPoliticas = document.getElementById('btn-aceptar-politicas');
+            const modalOverlay = modalPoliticas.querySelector('.modal-overlay');
+            
+            // Función para mostrar el modal
+            function mostrarModal() {
+                modalPoliticas.classList.remove('hidden');
+                modalPoliticas.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+                
+                // Actualizar valores de políticas
+                actualizarPoliticasModal();
+            }
+            
+            // Función para cerrar el modal
+            function cerrarModal() {
+                modalPoliticas.classList.add('hidden');
+                modalPoliticas.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+            
+            // Función para actualizar los valores en el modal
+            function actualizarPoliticasModal() {
+                if (politicasReserva) {
+                    // Tiempo de cancelación
+                    const cancelacion = politicasReserva.tiempo_cancelacion_min || 60;
+                    document.getElementById('politica-cancelacion').textContent = 
+                        cancelacion >= 60 ? (cancelacion / 60) + ' hora(s) antes' : cancelacion + ' minutos antes';
+                    
+                    // Anticipación mínima
+                    const anticipacion = politicasReserva.tiempo_anticipacion_horas || 1;
+                    document.getElementById('politica-anticipacion').textContent = 
+                        anticipacion + ' hora(s) de anticipación';
+                    
+                    // Máximo de personas
+                    const maxPersonas = politicasReserva.max_personas_por_reserva || 8;
+                    document.getElementById('politica-max-personas').textContent = 
+                        maxPersonas + ' personas máximo';
+                    
+                    // Actualizar el campo de número de personas con el máximo
+                    const numPersonasInput = document.getElementById('numero_personas');
+                    if (numPersonasInput) {
+                        numPersonasInput.setAttribute('max', maxPersonas);
+                    }
+                    
+                    // Duración
+                    const duracion = politicasReserva.duracion_default_min || 90;
+                    document.getElementById('politica-duracion').textContent = 
+                        duracion >= 60 ? Math.floor(duracion / 60) + 'h ' + (duracion % 60 > 0 ? (duracion % 60) + 'min' : '') : duracion + ' minutos';
+                }
+            }
+            
+            // Event listeners para el modal
+            btnVerPoliticas.addEventListener('click', mostrarModal);
+            btnCerrarModal.addEventListener('click', cerrarModal);
+            btnAceptarPoliticas.addEventListener('click', cerrarModal);
+            modalOverlay.addEventListener('click', cerrarModal);
+            
+            // Cerrar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modalPoliticas.classList.contains('hidden')) {
+                    cerrarModal();
+                }
+            });
+            
+            // Inicializar el máximo de personas basado en las políticas
+            if (politicasReserva && politicasReserva.max_personas_por_reserva) {
+                const numPersonasInput = document.getElementById('numero_personas');
+                if (numPersonasInput) {
+                    numPersonasInput.setAttribute('max', politicasReserva.max_personas_por_reserva);
+                }
+            }
+        });
+
+    style.
+        #modal-politicas {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        #modal-politicas .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        .backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+        }
+
+        /* Estilos para selector de zona */
+        .zona-option input:checked + .zona-card {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Interior - Azul */
+        .zona-option:nth-child(1) input:checked + .zona-card {
+            border-color: #3B82F6 !important;
+            background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+        }
+        
+        /* Terraza - Verde */
+        .zona-option:nth-child(2) input:checked + .zona-card {
+            border-color: #22C55E !important;
+            background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+        }
+        
+        /* Barra - Rojo */
+        .zona-option:nth-child(3) input:checked + .zona-card {
+            border-color: #EF4444 !important;
+            background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+        }
+        
+        /* Privado - Morado */
+        .zona-option:nth-child(4) input:checked + .zona-card {
+            border-color: #A855F7 !important;
+            background: linear-gradient(135deg, #FAF5FF, #F3E8FF);
+        }
+
+        .zona-card {
+            transition: all 0.2s ease;
+        }
+
+        .zona-option:hover .zona-card {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
