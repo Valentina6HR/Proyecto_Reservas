@@ -1,29 +1,48 @@
 import jwt from "jsonwebtoken";
-import { Usuario } from "../models/index.js";
+import { CuentaUsuario } from "../models/index.js";
 
-const protegerRuta = async (req, res, next) => {
-  // Verificar si hay un token
+/**
+ * Middleware para verificar que el usuario tiene acceso autorizado
+ * Valida el token JWT y verifica que el usuario esté activo
+ * 
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} res - Objeto de respuesta de Express
+ * @param {Function} next - Función para continuar al siguiente middleware
+ */
+const verificarAccesoAutorizado = async (req, res, next) => {
+  // Extraer el token de las cookies
   const { _token } = req.cookies;
+
+  // Si no hay token, redirigir al login
   if (!_token) {
-    return res.redirect("/auth/login");
+    return res.redirect("/acceso/ingresar");
   }
-  // Validar el token
+
+  // Intentar validar el token
   try {
-    const decoded = jwt.verify(_token, process.env.JWT_SECRETA);
-    const usuario = await Usuario.findByPk(decoded.id);
+    // Decodificar el token JWT
+    const informacionDecodificada = jwt.verify(_token, process.env.JWT_SECRETA);
+
+    // Buscar el usuario en la base de datos
+    const cuentaUsuario = await CuentaUsuario.findByPk(informacionDecodificada.id);
 
     // Verificar que el usuario existe, está activo y el token coincide
-    if (usuario && usuario.estado === "activo" && usuario.token === _token) {
-      // Eliminar password antes de asignarlo a req.usuario
-      const { password, ...usuarioSinPassword } = usuario.toJSON();
-      req.usuario = usuarioSinPassword;
+    if (cuentaUsuario && cuentaUsuario.estado === "activo" && cuentaUsuario.token === _token) {
+      // Eliminar la contraseña antes de asignar a req.usuario
+      const { password, ...datosUsuarioSinCredencial } = cuentaUsuario.toJSON();
+      req.usuario = datosUsuarioSinCredencial;
+
+      // Continuar con la siguiente función
       return next();
     } else {
-      return res.clearCookie("_token").redirect("/auth/login");
+      // Token inválido o usuario inactivo, limpiar cookie y redirigir
+      return res.clearCookie("_token").redirect("/acceso/ingresar");
     }
   } catch (error) {
-    return res.clearCookie("_token").redirect("/auth/login");
+    // Error al verificar el token, limpiar cookie y redirigir
+    return res.clearCookie("_token").redirect("/acceso/ingresar");
   }
 };
 
-export default protegerRuta;
+// Exportar el middleware
+export default verificarAccesoAutorizado;

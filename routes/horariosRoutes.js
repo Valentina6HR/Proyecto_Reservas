@@ -1,28 +1,25 @@
-// routes/horarios.js
+// Importaciones necesarias
 import express from "express";
-import protegerRuta from "../middleware/protegerRuta.js";
-import rol from "../middleware/administrarRoles.js";
-import {
-    listarHorarios,
-    crearHorario,
-    editarHorario,
-    eliminarHorario,
-    verPoliticas,
-    actualizarPolitica
-} from "../controllers/horariosController.js";
+import { mostrarConfiguracionHorarios, actualizarHorarios } from "../controllers/horariosController.js";
+import verificarAccesoAutorizado from "../middleware/protegerRuta.js";
+import validarPermisosPorRol from "../middleware/administrarRoles.js";
 
-const router = express.Router();
+// Crear enrutador de Express
+const enrutador = express.Router();
 
-// Página principal de configuración
-router.get("/config", protegerRuta, rol("admin"), listarHorarios);
+/**
+ * Ruta para mostrar la configuración de horarios
+ * GET /configuracion/horarios
+ * Muestra el formulario de configuración de horarios de atención
+ */
+enrutador.get("/configuracion/horarios", verificarAccesoAutorizado, validarPermisosPorRol("admin"), mostrarConfiguracionHorarios);
 
-// Operaciones CRUD de horarios
-router.post("/config/horarios/crear", protegerRuta, rol("admin"), crearHorario);
-router.post("/config/horarios/:id/editar", protegerRuta, rol("admin"), editarHorario);
-router.post("/config/horarios/:id/eliminar", protegerRuta, rol("admin"), eliminarHorario);
+/**
+ * Ruta para actualizar los horarios de atención
+ * POST /configuracion/horarios
+ * Procesa y guarda los cambios en los horarios
+ */
+enrutador.post("/configuracion/horarios", verificarAccesoAutorizado, validarPermisosPorRol("admin"), actualizarHorarios);
 
-// Políticas
-router.get("/config/politicas", protegerRuta, rol("admin"), verPoliticas);
-router.post("/config/politicas/actualizar", protegerRuta, rol("admin"), actualizarPolitica);
-
-export default router;
+// Exportar el enrutador
+export default enrutador;

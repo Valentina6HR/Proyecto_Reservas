@@ -1,20 +1,34 @@
-import Usuario from "./Usuarios.js";
-import Mesa from "./Mesas.js";
-import Reserva from "./Reservas.js";
-import ConfiguracionRestaurante from "./ConfiguracionRestaurante.js";
-import HorarioAtencion from "./HorarioAtencion.js";
-import PoliticaReserva from "./PoliticaReserva.js";
+import CuentaUsuario from "./Usuarios.js";
+import EspacioComedor from "./Mesas.js";
+import ReservaRestaurante from "./Reservas.js";
+import ParametrosEstablecimiento from "./ConfiguracionRestaurante.js";
+import ProgramaAtencion from "./HorarioAtencion.js";
+import ReglasReservacion from "./PoliticaReserva.js";
 
-// Cliente -> Reservas
-Reserva.belongsTo(Usuario, { foreignKey: "id_usuario" });
-Usuario.hasMany(Reserva, { foreignKey: "id_usuario" });
+/**
+ * Definición de relaciones entre modelos
+ */
 
-// Mesa -> Reservas (opcional)
-Reserva.belongsTo(Mesa, { foreignKey: "id_mesa" });
-Mesa.hasMany(Reserva, { foreignKey: "id_mesa" });
+// Un usuario puede tener múltiples reservas
+ReservaRestaurante.belongsTo(CuentaUsuario, { foreignKey: "id_usuario", as: "Usuario" });
+CuentaUsuario.hasMany(ReservaRestaurante, { foreignKey: "id_usuario" });
 
-// Usuario -> Reservas creadas
-Reserva.belongsTo(Usuario, { foreignKey: "creado_por" });
-Usuario.hasMany(Reserva, { foreignKey: "creado_por" });
+// Relación: Una reserva puede estar asignada a un espacio comedor (mesa)
+// Un espacio comedor puede tener múltiples reservas a lo largo del tiempo
+ReservaRestaurante.belongsTo(EspacioComedor, { foreignKey: "id_mesa", as: "Mesa" });
+EspacioComedor.hasMany(ReservaRestaurante, { foreignKey: "id_mesa" });
 
-export { Usuario, Mesa, Reserva, ConfiguracionRestaurante, HorarioAtencion, PoliticaReserva };
+// Relación: Una reserva fue creada por un usuario (puede ser recepcionista o admin)
+// Un usuario puede haber creado múltiples reservas para otros clientes
+ReservaRestaurante.belongsTo(CuentaUsuario, { foreignKey: "creado_por", as: "Creador" });
+CuentaUsuario.hasMany(ReservaRestaurante, { foreignKey: "creado_por" });
+
+// Exportar todos los modelos para su uso en la aplicación
+export {
+    CuentaUsuario,
+    EspacioComedor,
+    ReservaRestaurante,
+    ParametrosEstablecimiento,
+    ProgramaAtencion,
+    ReglasReservacion
+};

@@ -1,21 +1,24 @@
-// misReservasRoutes.js
+// Importaciones necesarias
 import express from "express";
-import {
-    mostrarMisReservas,
-    cancelarMiReserva,
-    obtenerEstadoReserva
-} from "../controllers/misReservasController.js";
-import protegerRuta from "../middleware/protegerRuta.js";
+import { visualizarReservasUsuario, cancelarReservaUsuario } from "../controllers/misReservasController.js";
+import verificarAccesoAutorizado from "../middleware/protegerRuta.js";
 
-const router = express.Router();
+// Crear enrutador de Express
+const enrutador = express.Router();
 
-// Ver mis reservas
-router.get("/", protegerRuta, mostrarMisReservas);
+/**
+ * Ruta para visualizar las reservas del usuario autenticado
+ * GET /mis-reservas
+ * Muestra todas las reservas (pasadas y futuras) del usuario
+ */
+enrutador.get("/", verificarAccesoAutorizado, visualizarReservasUsuario);
 
-// Cancelar una reserva
-router.post("/:id/cancelar", protegerRuta, cancelarMiReserva);
+/**
+ * Ruta para cancelar una reserva del usuario
+ * POST /mis-reservas/:id/cancelar
+ * Permite al usuario cancelar sus propias reservas
+ */
+enrutador.post("/:id/cancelar", verificarAccesoAutorizado, cancelarReservaUsuario);
 
-// API para obtener estado en tiempo real
-router.get("/api/:id/estado", protegerRuta, obtenerEstadoReserva);
-
-export default router;
+// Exportar el enrutador
+export default enrutador;

@@ -1,24 +1,69 @@
+// Importaciones necesarias
 import express from "express";
-import { panelPrincipal, verReservas, cambiarEstadoReserva, eliminarReserva, reagendarReserva, verUsuarios, cambiarRolUsuario } from "../controllers/adminController.js";
-import { reporteResumen } from "../controllers/reportesController.js";
-import protegerRuta from "../middleware/protegerRuta.js";
-import rol from "../middleware/administrarRoles.js";
+import { mostrarPanelPrincipal, visualizarReservas, modificarEstadoReserva, eliminarReserva, reprogramarReserva, presentarFormularioReprogramacion, visualizarCuentas, modificarRolCuenta } from "../controllers/adminController.js";
+import { generarResumenInformes } from "../controllers/reportesController.js";
+import {
+    mostrarConfiguracionPoliticas,
+    actualizarPoliticas
+} from "../controllers/politicasController.js";
+import verificarAccesoAutorizado from "../middleware/protegerRuta.js";
+import validarPermisosPorRol from "../middleware/administrarRoles.js";
+import { validarDatosReprogramacion } from "../validations/validacionReprogramacion.js";
 
-const router = express.Router();
+// Crear enrutador de Express
+const enrutador = express.Router();
 
-// Panel accesible para Admin y Recepcionista
-router.get("/panel/admin", protegerRuta, rol("admin", "recepcionista"), panelPrincipal);
+/**
+ * Ruta del Panel Principal de Gestión
+ * Accesible para administradores y recepcionistas
+ * GET /gestion/panel
+ */
+enrutador.get("/gestion/panel", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), mostrarPanelPrincipal);
 
-// Gestión de Reservas
-router.get("/admin/reservas", protegerRuta, rol("admin", "recepcionista"), verReservas);
-router.post("/admin/reservas/:id/estado", protegerRuta, rol("admin", "recepcionista"), cambiarEstadoReserva);
-router.post("/admin/reservas/:id/reagendar", protegerRuta, rol("admin", "recepcionista"), reagendarReserva);
-router.post("/admin/reservas/:id/eliminar", protegerRuta, rol("admin", "recepcionista"), eliminarReserva);
+/**
+ * Rutas de Gestión de Reservas
+ * Permiten ver y modificar todas las reservas del sistema
+ */
 
-// Gestión de Usuarios (Solo Admin)
-router.get("/admin/usuarios", protegerRuta, rol("admin"), verUsuarios);
-router.post("/admin/usuarios/:id/rol", protegerRuta, rol("admin"), cambiarRolUsuario);
+// Ver todas las reservas
+enrutador.get("/gestion/reservas", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), visualizarReservas);
 
-router.get("/admin/reportes", protegerRuta, rol("admin", "recepcionista"), reporteResumen);
+// Cambiar estado de una reserva
+enrutador.post("/gestion/reservas/:id/estado", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), modificarEstadoReserva);
 
-export default router;
+// Reprogramar una reserva
+enrutador.get("/gestion/reservas/:id/reprogramar", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), presentarFormularioReprogramacion);
+enrutador.post("/gestion/reservas/:id/reprogramar", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), validarDatosReprogramacion, reprogramarReserva);
+
+// Eliminar una reserva
+enrutador.post("/gestion/reservas/:id/eliminar", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), eliminarReserva);
+
+/**
+ * Rutas de Gestión de Cuentas de Usuario
+ * Solo accesibles para administradores
+ */
+
+// Ver todas las cuentas
+enrutador.get("/gestion/cuentas", verificarAccesoAutorizado, validarPermisosPorRol("admin"), visualizarCuentas);
+
+// Cambiar rol de una cuenta
+enrutador.post("/gestion/cuentas/:id/rol", verificarAccesoAutorizado, validarPermisosPorRol("admin"), modificarRolCuenta);
+
+/**
+ * Ruta de Informes y Reportes
+ * Genera estadísticas y resúmenes del sistema
+ * GET /gestion/informes
+ */
+enrutador.get("/gestion/informes", verificarAccesoAutorizado, validarPermisosPorRol("admin", "recepcionista"), generarResumenInformes);
+
+// ========================================
+// Rutas de Políticas de Reservación
+// ========================================
+// Ruta para mostrar formulario de políticas (solo admin)
+enrutador.get("/gestion/politicas", verificarAccesoAutorizado, validarPermisosPorRol("admin"), mostrarConfiguracionPoliticas);
+
+// Ruta para actualizar políticas (solo admin)
+enrutador.post("/gestion/politicas", verificarAccesoAutorizado, validarPermisosPorRol("admin"), actualizarPoliticas);
+
+// Exportar el enrutador
+export default enrutador;

@@ -1,15 +1,25 @@
-// reservasRoutes.js
+// Importaciones necesarias
 import express from "express";
-import { mostrarFormulario, crearReserva } from "../controllers/reservasController.js";
-import protegerRuta from "../middleware/protegerRuta.js";
-import { validarReserva } from "../validations/validacionReservas.js";
+import { presentarFormularioReserva, registrarNuevaReserva } from "../controllers/reservasController.js";
+import verificarAccesoAutorizado from "../middleware/protegerRuta.js";
+import { validarDatosCita } from "../validations/validacionReservas.js";
 
-const router = express.Router();
+// Crear enrutador de Express
+const enrutador = express.Router();
 
-// Mostrar formulario de reserva
-router.get("/", protegerRuta, mostrarFormulario);
+/**
+ * Ruta para mostrar el formulario de reservas
+ * GET /reservas
+ * Requiere autenticación
+ */
+enrutador.get("/", verificarAccesoAutorizado, presentarFormularioReserva);
 
-// Procesar formulario de reserva
-router.post("/", protegerRuta, validarReserva, crearReserva);
+/**
+ * Ruta para procesar el formulario de reservas
+ * POST /reservas
+ * Requiere autenticación y validación de datos
+ */
+enrutador.post("/", verificarAccesoAutorizado, validarDatosCita, registrarNuevaReserva);
 
-export default router;
+// Exportar el enrutador
+export default enrutador;

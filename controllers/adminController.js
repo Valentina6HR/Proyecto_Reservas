@@ -1,185 +1,290 @@
-import Reserva from "../models/Reservas.js";
-import Usuario from "../models/Usuarios.js";
-import Mesa from "../models/Mesas.js";
+import { CuentaUsuario, ReservaRestaurante, EspacioComedor } from "../models/index.js";
+import { Op } from "sequelize";
+import { validationResult } from "express-validator";
+import { validarHorarioAtencion } from "../helpers/validarHorario.js";
 
-const panelPrincipal = async (req, res) => {
+
+const mostrarPanelPrincipal = async (req, res) => {
     try {
-        // Datos básicos (para tarjetas)
-        const totalReservas = await Reserva.count();
-        const reservasHoy = await Reserva.count({
-            where: { fecha_reserva: new Date().toISOString().split("T")[0] }
-        });
+        // estadísticas
+        const totalReservas = await ReservaRestaurante.count();
+        const ReservasPendientes = await ReservaRestaurante.count({ where: { estado: "pendiente" } });
+        const ReservasConfirmadas = await ReservaRestaurante.count({ where: { estado: "confirmada" } });
+        const totalCuentas = await CuentaUsuario.count();
+        const totalEspacios = await EspacioComedor.count();
 
-        const totalUsuarios = await Usuario.count();
+        // Reservas recientes
+        const ReservasRecientes = await ReservaRestaurante.findAll({
+            limit: 10,
+            order: [["createdAt", "DESC"]],
+            include: [
+                { model: CuentaUsuario, as: "Usuario", attributes: ["nombre", "email"] },
+                { model: EspacioComedor, as: "Mesa", attributes: ["nombre", "zona"] }
+            ]
+        });
 
         res.render("panel/admin", {
-            title: "Panel de Control",
+            pagina: "Panel de Gestión",
             csrfToken: req.csrfToken(),
             usuario: req.usuario,
-            totalReservas,
-            reservasHoy,
-            totalUsuarios
+            estadisticas: {
+                totalReservas,
+                ReservasPendientes,
+                ReservasConfirmadas,
+                totalCuentas,
+                totalEspacios
+            },
+            ReservasRecientes
         });
     } catch (error) {
-        console.log(error);
+        console.error("Error al cargar panel:", error);
+        res.render("panel/admin", {
+            pagina: "Panel de Gestión",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: [{ msg: "Error al cargar el panel" }]
+        });
     }
 };
 
-const verReservas = async (req, res) => {
+/**
+ * Ver todas las Reservas del sistema
+ */
+const visualizarReservas = async (req, res) => {
     try {
-        const reservas = await Reserva.findAll({
+        const { estado, fecha } = req.query;
+        let condicionesBusqueda = {};
+
+        if (estado) {
+            condicionesBusqueda.estado = estado;
+        }
+
+        if (fecha) {
+            condicionesBusqueda.fecha_reserva = fecha;
+        }
+
+        const todasLasReservas = await ReservaRestaurante.findAll({
+            where: condicionesBusqueda,
+            order: [["fecha_reserva", "DESC"], ["hora_inicio", "DESC"]],
             include: [
-                { model: Usuario, as: "usuario", attributes: ["nombre", "email", "telefono"] },
-                { model: Mesa, attributes: ["id", "nombre", "capacidad", "zona", "estado"] }
-            ],
-            order: [["fecha_reserva", "DESC"], ["hora_inicio", "ASC"]]
+                { model: CuentaUsuario, as: "Usuario", attributes: ["nombre", "email", "telefono"] },
+                { model: EspacioComedor, as: "Mesa", attributes: ["nombre", "zona", "capacidad"] }
+            ]
         });
 
         res.render("panel/reservas", {
-            title: "Gestión de Reservas",
+            pagina: "Gestión de Reservas",
+            csrfToken: req.csrfToken(),
             usuario: req.usuario,
-            reservas,
-            csrfToken: req.csrfToken()
+            Reservas: todasLasReservas,
+            filtros: { estado, fecha }
         });
     } catch (error) {
-        console.log(error);
+        console.error("Error al visualizar Reservas:", error);
+        res.render("panel/reservas", {
+            pagina: "Gestión de Reservas",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: [{ msg: "Error al cargar las Reservas" }],
+            Reservas: []
+        });
     }
 };
 
-const cambiarEstadoReserva = async (req, res) => {
+/**
+ * Modifica el estado de una Reserva
+ */
+const modificarEstadoReserva = async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
     try {
-        const { id } = req.params;
-        const { estado } = req.body;
+        const ReservaEncontrada = await ReservaRestaurante.findByPk(id);
 
-        const estadosValidos = ["pendiente", "confirmada", "en_curso", "completada", "cancelada", "no_show"];
-
-        if (!estadosValidos.includes(estado)) {
-            return res.status(400).json({ error: "Estado no válido" });
+        if (!ReservaEncontrada) {
+            req.flash('error', 'Reserva no encontrada');
+            return res.redirect("/gestion/reservas");
         }
 
-        const reserva = await Reserva.findByPk(id);
-
-        if (!reserva) {
-            return res.status(404).json({ error: "Reserva no encontrada" });
-        }
-
-        await reserva.update({ estado });
-
-        // Redirigir de vuelta a la lista de reservas
-        res.redirect("/admin/reservas");
+        await ReservaEncontrada.update({ estado });
+        req.flash('exito', `Estado de la Reserva actualizado a: ${estado}`);
+        res.redirect("/gestion/reservas");
     } catch (error) {
-        console.error("Error al cambiar estado:", error);
-        res.status(500).json({ error: "Error al actualizar la reserva" });
+        console.error("Error al modificar estado:", error);
+        req.flash('error', 'Error al modificar el estado de la Reserva');
+        res.redirect("/gestion/reservas");
     }
 };
 
+/**
+ * Cambia la fecha y/o hora de la Reserva
+ */
+
+const reprogramarReserva = async (req, res) => {
+    const { id } = req.params;
+
+    // alidar errores de express-validator 
+    let resultadoValidacion = validationResult(req);
+
+    // Si hay errores de validación
+    if (!resultadoValidacion.isEmpty()) {
+        const reserva = await ReservaRestaurante.findByPk(id);
+        if (!reserva) return res.redirect("/gestion/reservas");
+
+        return res.render("panel/reprogramar", {
+            pagina: "Reprogramar Reserva",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: resultadoValidacion.array(),
+            reserva: { ...reserva.dataValues, fecha_reserva: req.body.fecha_reserva, hora_inicio: req.body.hora_inicio }
+        });
+    }
+
+    const { fecha_reserva, hora_inicio } = req.body;
+
+    try {
+        const ReservaEncontrada = await ReservaRestaurante.findByPk(id);
+
+        if (!ReservaEncontrada) {
+            req.flash('error', 'Reserva no encontrada');
+            return res.redirect("/gestion/reservas");
+        }
+
+        // Validar Horario de Atenci
+        const horarioValido = await validarHorarioAtencion(fecha_reserva, hora_inicio);
+
+        if (!horarioValido) {
+            return res.render("panel/reprogramar", {
+                pagina: "Reprogramar Reserva",
+                csrfToken: req.csrfToken(),
+                usuario: req.usuario,
+                errores: [{ msg: "La hora seleccionada está fuera del horario de atención del restaurante para ese día." }],
+                reserva: { ...ReservaEncontrada.dataValues, fecha_reserva, hora_inicio }
+            });
+        }
+
+        await ReservaEncontrada.update({ fecha_reserva, hora_inicio });
+        req.flash('exito', 'Reserva reprogramada exitosamente');
+        res.redirect("/gestion/reservas");
+    } catch (error) {
+        console.error("Error al reprogramar Reserva:", error);
+        req.flash('error', 'Error al reprogramar la Reserva');
+        res.redirect("/gestion/reservas");
+    }
+};
+
+/**
+ * Elimina una Reserva del sistema
+ */
 const eliminarReserva = async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const { id } = req.params;
+        const ReservaEncontrada = await ReservaRestaurante.findByPk(id);
 
-        const reserva = await Reserva.findByPk(id);
-
-        if (!reserva) {
-            return res.status(404).json({ error: "Reserva no encontrada" });
+        if (!ReservaEncontrada) {
+            req.flash('error', 'Reserva no encontrada');
+            return res.redirect("/gestion/reservas");
         }
 
-        await reserva.destroy();
-
-        res.redirect("/admin/reservas");
+        await ReservaEncontrada.destroy();
+        req.flash('exito', 'Reserva eliminada exitosamente');
+        res.redirect("/gestion/reservas");
     } catch (error) {
-        console.error("Error al eliminar reserva:", error);
-        res.status(500).json({ error: "Error al eliminar la reserva" });
+        console.error("Error al eliminar Reserva:", error);
+        req.flash('error', 'Error al eliminar la Reserva');
+        res.redirect("/gestion/reservas");
     }
 };
 
-const reagendarReserva = async (req, res) => {
+/**
+ * Visualiza todas las cuentas de usuario del sistema
+ */
+const visualizarCuentas = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { fecha_reserva, hora_inicio, motivo_reagendamiento } = req.body;
-
-        const reserva = await Reserva.findByPk(id, {
-            include: [{ model: Usuario, as: "usuario", attributes: ["nombre", "email"] }]
+        const todasLasCuentas = await CuentaUsuario.findAll({
+            attributes: { exclude: ["password", "token"] },
+            order: [["createdAt", "DESC"]]
         });
 
-        if (!reserva) {
-            return res.status(404).json({ error: "Reserva no encontrada" });
-        }
-
-        // Guardar datos anteriores para la notificación
-        const fechaAnterior = reserva.fecha_reserva;
-        const horaAnterior = reserva.hora_inicio;
-
-        // Calcular nueva hora de fin (90 minutos después)
-        const [h, m] = hora_inicio.split(":").map(Number);
-        const finDate = new Date();
-        finDate.setHours(h, m, 0);
-        finDate.setMinutes(finDate.getMinutes() + 90);
-        const hora_fin = `${finDate.getHours().toString().padStart(2, "0")}:${finDate.getMinutes().toString().padStart(2, "0")}:00`;
-
-        // Actualizar la reserva
-        await reserva.update({
-            fecha_reserva,
-            hora_inicio,
-            hora_fin,
-            observaciones: reserva.observaciones
-                ? `${reserva.observaciones} | Reagendada el ${new Date().toLocaleDateString('es-ES')}: ${motivo_reagendamiento || 'Sin motivo especificado'}`
-                : `Reagendada el ${new Date().toLocaleDateString('es-ES')}: ${motivo_reagendamiento || 'Sin motivo especificado'}`
-        });
-
-        // Log para notificación (en un sistema real aquí se enviaría el email)
-        console.log(`📧 NOTIFICACIÓN DE REAGENDAMIENTO:`);
-        console.log(`   Cliente: ${reserva.usuario?.nombre || 'N/A'} (${reserva.usuario?.email || 'N/A'})`);
-        console.log(`   Reserva #${id} reagendada`);
-        console.log(`   De: ${fechaAnterior} ${horaAnterior}`);
-        console.log(`   A: ${fecha_reserva} ${hora_inicio}`);
-        console.log(`   Motivo: ${motivo_reagendamiento || 'No especificado'}`);
-
-        res.redirect("/admin/reservas");
-    } catch (error) {
-        console.error("Error al reagendar reserva:", error);
-        res.status(500).json({ error: "Error al reagendar la reserva" });
-    }
-};
-
-const verUsuarios = async (req, res) => {
-    try {
-        const usuarios = await Usuario.findAll();
         res.render("panel/usuarios", {
-            title: "Gestión de Usuarios",
+            pagina: "Gestión de Cuentas",
+            csrfToken: req.csrfToken(),
             usuario: req.usuario,
-            usuarios,
-            csrfToken: req.csrfToken()
+            cuentas: todasLasCuentas
         });
     } catch (error) {
-        console.log(error);
+        console.error("Error al visualizar cuentas:", error);
+        res.render("panel/usuarios", {
+            pagina: "Gestión de Cuentas",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: [{ msg: "Error al cargar las cuentas" }],
+            cuentas: []
+        });
     }
 };
 
-const cambiarRolUsuario = async (req, res) => {
+/**
+ * Modifica el rol de una cuenta de usuario
+ */
+const modificarRolCuenta = async (req, res) => {
+    const { id } = req.params;
+    const { rol } = req.body;
+
     try {
-        const { id } = req.params;
-        const { rol } = req.body;
+        const cuentaEncontrada = await CuentaUsuario.findByPk(id);
 
-        // Validar que el rol sea 'cliente' (usuario) o 'recepcionista' según requerimiento
-        if (!['cliente', 'recepcionista'].includes(rol)) {
-            // Si intenta enviar otro rol, ignoramos o damos error.
-            // Para mantener fluidez, redirigimos con un error flash sería ideal,
-            // pero por simplicidad redirigimos.
-            return res.redirect("/admin/usuarios");
+        if (!cuentaEncontrada) {
+            req.flash('error', 'Cuenta no encontrada');
+            return res.redirect("/gestion/cuentas");
         }
 
-        const usuario = await Usuario.findByPk(id);
-        if (!usuario) {
-            return res.redirect("/admin/usuarios");
-        }
-
-        await usuario.update({ rol });
-
-        res.redirect("/admin/usuarios");
+        await cuentaEncontrada.update({ rol });
+        req.flash('exito', `Rol actualizado a: ${rol}`);
+        res.redirect("/gestion/cuentas");
     } catch (error) {
-        console.error("Error al cambiar rol:", error);
-        res.redirect("/admin/usuarios");
+        console.error("Error al modificar rol:", error);
+        req.flash('error', 'Error al modificar el rol');
+        res.redirect("/gestion/cuentas");
     }
 };
 
-export { panelPrincipal, verReservas, cambiarEstadoReserva, eliminarReserva, reagendarReserva, verUsuarios, cambiarRolUsuario };
+/**
+ * Muestra el formulario para reprogramar una reserva
+ */
+const presentarFormularioReprogramacion = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const reserva = await ReservaRestaurante.findByPk(id);
+
+        if (!reserva) {
+            req.flash('error', 'Reserva no encontrada');
+            return res.redirect("/gestion/reservas");
+        }
+
+        res.render("panel/reprogramar", {
+            pagina: "Reprogramar Reserva",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            reserva
+        });
+    } catch (error) {
+        console.error("Error al mostrar formulario de reprogramación:", error);
+        req.flash('error', 'Error al cargar el formulario');
+        res.redirect("/gestion/reservas");
+    }
+};
+
+// Exportar funciones del controlador
+export {
+    mostrarPanelPrincipal,
+    visualizarReservas,
+    modificarEstadoReserva,
+    presentarFormularioReprogramacion,
+    reprogramarReserva,
+    eliminarReserva,
+    visualizarCuentas,
+    modificarRolCuenta
+};

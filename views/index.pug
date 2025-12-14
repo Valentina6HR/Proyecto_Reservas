@@ -1,123 +1,71 @@
 extends layout/index
 
 block contenido
-    //- Mensaje de éxito de reserva
+    //- Hero Section con tema morado/pastel
+    section(class="relative.bg-gradient-to-br.from-purple-100.via-pink-100.to-white.py-20.px-4.rounded-3xl.shadow-xl.mb-16.overflow-hidden")(data-aos="fade-up")
+        //- Decoración de fondo
+        .absolute.top-0.right-0.w-64.h-64.bg-purple-300.rounded-full.opacity-20.blur-3xl
+        .absolute.bottom-0.left-0.w-96.h-96.bg-pink-300.rounded-full.opacity-20.blur-3xl
+        
+        .container.mx-auto.text-center.relative.z-10
+            h1(class="text-5xl.md_text-6xl.font-bold.text-purple-600.mb-6")(style="font-family: 'Playfair Display', serif;" data-aos="fade-down") 
+                | Bienvenidos a Nube Brunch
+            p.text-xl.md_text-2xl.text-gray-700.mb-8.font-light.max-w-2xl.mx-auto(data-aos="fade-up" data-aos-delay="100") 
+                | Tu pausa favorita del día
+            
+            a(class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 transform hover:shadow-2xl hover:scale-110")(href="/reservas" data-aos="zoom-in" data-aos-delay="200") 
+                | Reservar Mesa Ahora
+
+    //- Mensaje de éxito si existe
     if mensajeExito
-        .fixed.top-24.right-4.z-50.max-w-md(id="successMessage" data-aos="fade-left")
-            .bg-green-100.border-l-4.border-green-500.text-green-700.p-6.rounded-lg.shadow-2xl.relative
-                button.absolute.top-2.right-2.text-green-700.hover_text-green-900(onclick="this.parentElement.parentElement.style.display='none'" type="button")
-                    span.text-2xl &times;
-                .flex.items-start
-                    .flex-shrink-0
-                        span.text-4xl.mr-4
-                    div
-                        p.font-bold.text-lg.mb-1 ¡Reserva Confirmada!
-                        p.text-sm= mensajeExito.texto
+        .container.mx-auto.mb-12(data-aos="fade-up")
+            .bg-gradient-to-r.from-purple-100.to-pink-100.border-l-4.border-purple-500.text-purple-800.p-6.rounded-xl.shadow-lg
+                p.font-medium.text-lg= mensajeExito.texto
+
+    //- Sección "Sobre Nosotros"
+    section.container.mx-auto.mb-16.px-4(data-aos="fade-up")
+        .bg-white.rounded-3xl.shadow-xl.p-8.md_p-12.border-2.border-purple-100
+            h2(class="text-4xl.font-semibold.text-purple-600.mb-6.text-center")(style="font-family: 'Playfair Display', serif;") 
+                | Sobre Nosotros
+            p.text-gray-700.text-lg.leading-relaxed.max-w-3xl.mx-auto.text-center.font-light
+                | En Nube Brunch creemos que disfrutar un brunch es mucho más que comer.
+                | Creamos un espacio cálido y delicado donde cada mesa invita a relajarse, compartir y saborear el momento.
+                |Cuidamos cada detalle: desde nuestros ingredientes hasta la experiencia, para que cada visita se sienta especial.
+
+    //- Características destacadas
+    section.container.mx-auto.mb-16.px-4
+        h2(class="text-4xl.font-semibold.text-purple-600.mb-12.text-center")(style="font-family: 'Playfair Display', serif;" data-aos="fade-up") 
+            | ¿Por qué elegirnos?
         
-        script.
-            // Auto-cerrar después de 8 segundos
-            setTimeout(function() {
-                const msg = document.getElementById('successMessage');
-                if (msg) {
-                    msg.style.transition = 'opacity 0.5s ease-out';
-                    msg.style.opacity = '0';
-                    setTimeout(() => msg.style.display = 'none', 500);
-                }
-            }, 8000);
+        .grid.grid-cols-1.md_grid-cols-3.gap-8
+            //- Característica 1
+            .bg-gradient-to-br.from-purple-50.to-pink-50.p-8.rounded-2xl.shadow-lg(class="hover:shadow-2xl hover:scale-105")(data-aos="fade-up" data-aos-delay="100")
+                .text-center.mb-4
+                h3.text-2xl.font-semibold.text-purple-600.mb-3.text-center Elegancia
+                p.text-gray-700.text-center.font-light
+                    | Diseño delicado y femenino que hace que cada interacción sea especial
 
-    //- Hero Section
-    section.relative.py-20.bg-carbon.text-center.rounded-xl.overflow-hidden.shadow-2xl.mb-16(data-aos="fade-down")
-        img.absolute.inset-0.w-full.h-full.object-cover.opacity-70.blur-sm(src="/img/hero_background.png" alt="Restaurante Fondo")
-        div.absolute.inset-0.bg-black.opacity-50
-        div.relative.z-10.container.mx-auto.px-4
-            img.w-32.h-32.mx-auto.mb-6(src="/img/escudo_restaurante.svg" alt="Escudo" data-aos="zoom-in" data-aos-delay="300")
-            h1.text-5xl(class="md:text-7xl").font-serif.text-dorado.mb-4.font-bold(data-aos="fade-up" data-aos-delay="500") Benvenuti
-            p.text-xl(class="md:text-2xl").text-crema.font-sans.mb-8(data-aos="fade-up" data-aos-delay="700") Auténtica cocina italiana en un ambiente rústico y moderno.
-            a.inline-block.bg-vino.text-dorado.font-bold.py-3.px-8.rounded-full.text-lg(class="hover:bg-opacity-90 transition transform hover:scale-105" href="#menu" data-aos="fade-up" data-aos-delay="900") Ver Menú
+            //- Característica 2
+            .bg-gradient-to-br.from-pink-50.to-purple-50.p-8.rounded-2xl.shadow-lg(class="hover:shadow-2xl hover:scale-105")(data-aos="fade-up" data-aos-delay="200")
+                .text-center.mb-4
+                h3.text-2xl.font-semibold.text-purple-600.mb-3.text-center Simplicidad
+                p.text-gray-700.text-center.font-light
+                    | Proceso de reserva intuitivo y rápido, sin complicaciones
 
-    //- Info Section
-    section.py-16.bg-white.rounded-xl.shadow-lg.mb-16(data-aos="fade-right")
-        div.container.mx-auto.px-6.text-center
-            h2.text-4xl.font-serif.text-vino.mb-8.font-bold Nuestra Historia
-            p.text-lg.text-carbon.leading-relaxed.max-w-3xl.mx-auto.font-sans
-                | Fundado en 1995, Ristorante Tradizionale trae los sabores de la Toscana a tu mesa. 
-                | Utilizamos ingredientes frescos y recetas transmitidas de generación en generación 
-                | para ofrecerte una experiencia culinaria inolvidable. 
-                | Nuestro espacio combina la calidez de lo rústico con la elegancia moderna.
+            //- Característica 3
+            .bg-gradient-to-br.from-purple-50.to-pink-50.p-8.rounded-2xl.shadow-lg(class="hover:shadow-2xl hover:scale-105")(data-aos="fade-up" data-aos-delay="300")
+                .text-center.mb-4
+                h3.text-2xl.font-semibold.text-purple-600.mb-3.text-center Atención
+                p.text-gray-700.text-center.font-light
+                    | Servicio personalizado que se adapta a tus necesidades
 
-    //- Menu Section
-    section#menu.py-16
-        h2.text-4xl.font-serif.text-center.text-carbon.mb-12.font-bold(data-aos="fade-up") Platos Típicos
-        
-        div.grid.grid-cols-1.gap-8.items-start(class="md:grid-cols-2 lg:grid-cols-3")
-            //- Card 1
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="100")
-                img.w-full.h-48.object-cover(src="/img/spaghetti_carbonara.png" alt="Spaghetti Carbonara")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Spaghetti Carbonara
-                        span.text-xl.font-bold.text-oliva $18.00
-                    p.text-gray-600.mb-4 Pasta fresca con guanciale crujiente, queso pecorino, huevo y pimienta negra.
-                    
-
-            //- Card 2
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="200")
-                img.w-full.h-48.object-cover(src="/img/pizza_margherita.png" alt="Pizza Margherita")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Pizza Margherita
-                        span.text-xl.font-bold.text-oliva $15.00
-                    p.text-gray-600.mb-4 Tomate San Marzano, mozzarella di bufala, albahaca fresca y aceite de oliva.
-                    
-
-            //- Card 3
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="300")
-                img.w-full.h-48.object-cover(src="/img/risotto_funghi.png" alt="Risotto ai Funghi")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Risotto ai Funghi
-                        span.text-xl.font-bold.text-oliva $20.00
-                    p.text-gray-600.mb-4 Arroz arborio cremoso con una selección de setas silvestres y parmesano.
-                   
-
-            //- Card 4
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="400")
-                img.w-full.h-48.object-cover(src="/img/lasagna_bolognese.png" alt="Lasagna Bolognese")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Lasagna Bolognese
-                        span.text-xl.font-bold.text-oliva $19.00
-                    p.text-gray-600.mb-4 Capas de pasta, ragú de carne, bechamel y queso gratinado al horno.
-                   
-
-            //- Card 5
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="500")
-                img.w-full.h-48.object-cover(src="/img/tiramisu.png" alt="Tiramisu")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Tiramisu
-                        span.text-xl.font-bold.text-oliva $8.00
-                    p.text-gray-600.mb-4 Clásico postre italiano con bizcochos, café espresso y crema de mascarpone.
-                    
-
-            //- Card 6
-            div.bg-white.rounded-lg.shadow-xl.overflow-hidden.transform.transition.duration-300(class="hover:scale-105" data-aos="flip-left" data-aos-delay="600")
-                img.w-full.h-48.object-cover(src="/img/gelato.png" alt="Gelato")
-                div.p-6
-                    div.flex.justify-between.items-baseline.mb-4
-                        h3.text-2xl.font-serif.text-vino.font-bold Gelato
-                        span.text-xl.font-bold.text-oliva $6.00
-                    p.text-gray-600.mb-4 Helado artesanal italiano, disponible en varios sabores tradicionales.
-                    
-
-    //- Reservation Section
-    section.py-20.bg-white.rounded-xl.shadow-2xl.my-16(data-aos="fade-up")
-        div.container.mx-auto.px-6
-            div.flex.flex-col.items-center(class="lg:flex-row lg:gap-12")
-                div.w-full(class="lg:w-1/2 mb-10 lg:mb-0" data-aos="fade-right")
-                    img.rounded-lg.shadow-xl.w-full.object-cover.h-96(src="/img/reserva.png" alt="Mesa reservada")
-                div.w-full.text-center(class="lg:w-1/2 lg:text-left" data-aos="fade-left")
-                    h2.text-4xl.font-serif.text-vino.mb-6.font-bold Reserva con Nosotros
-                    p.text-xl.text-gray-700.leading-relaxed.mb-8.font-sans
-                        | Reserva una mesa y adiciona una decoración para tus momentos especiales o simplemente asegura tu lugar para seguir disfrutando de nuestra experiencia.
-                    a.inline-block.bg-dorado.text-vino.font-bold.py-3.px-8.rounded-full.text-lg(class="hover:bg-opacity-90 transition transform hover:scale-105" href="/reservas") Hacer Reserva
+    //- Call to Action final
+    section.container.mx-auto.mb-16.px-4(data-aos="fade-up")
+        .bg-gradient-to-r.from-purple-400.via-pink-400.to-purple-400.rounded-3xl.shadow-2xl.p-12.text-center.text-white
+            h2(class="text-4xl.font-semibold.mb-6")(style="font-family: 'Playfair Display', serif;") 
+                | ¿Listos para tu próxima Reserva?
+            p.text-xl.mb-8.font-light.max-w-2xl.mx-auto
+                | Reserva tu espacio en solo unos clics y disfruta de una experiencia inolvidable
+            
+            a(class="inline-block bg-white text-purple-600 font-semibold px-10 py-4 rounded-full transition-all duration-300 transform hover:shadow-2xl hover:scale-110")(href="/reservas") 
+                | Reservar Mesa 

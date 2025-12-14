@@ -3,44 +3,77 @@ html(lang="es")
     head
         meta(charset="UTF-8")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title Panel de Control | Ristorante Traditionale
-        link(href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet")
+        title Panel de Gestión | #{pagina}
+        link(href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet")
         link(rel="stylesheet", href="/css/style.css")
-        link(href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet")
-    body.min-h-screen.bg-crema.text-carbon.font-sans
+    body.min-h-screen.bg-gradient-to-br.from-purple-50.via-pink-50.to-white.text-gray-800(style="font-family: 'Poppins', sans-serif;")
         
-        //- Mensajes Flash
-        if mensajes
-            if mensajes.error && mensajes.error.length > 0
-                .flash-messages.fixed.top-4.right-4.z-50(style="max-width: 350px;")
-                    each error in mensajes.error
-                        .flash-message.flash-error.bg-white.border-l-4.border-vino.p-3.rounded.shadow-lg.mb-2(data-aos="fade-left")
-                            .flex.items-center.gap-2
-                                svg.w-5.h-5.text-vino(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
-                                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
-                                span.text-vino.font-medium.text-sm= error
-            
-            if mensajes.exito && mensajes.exito.length > 0
-                .flash-messages.fixed.top-4.right-4.z-50(style="max-width: 350px;")
-                    each exito in mensajes.exito
-                        .flash-message.flash-success.bg-white.border-l-4.border-green-500.p-3.rounded.shadow-lg.mb-2(data-aos="fade-left")
-                            .flex.items-center.gap-2
-                                svg.w-5.h-5.text-green-700(xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor")
-                                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z")
-                                span.text-green-700.font-medium.text-sm= exito
+        //- Barra superior
+        nav.bg-gradient-to-r.from-purple-500.to-pink-500.text-white.p-4.shadow-lg
+            .container.mx-auto.flex.justify-between.items-center
+                a(class="text-2xl.font-semibold")(href="/gestion/panel" style="font-family: 'Playfair Display', serif;") 
+                    | Panel de Gestión
+                .flex.items-center.gap-4
+                    span.font-light Hola, #{usuario.nombre}
+                    a(class="bg-white text-purple-600 px-4 py-2 rounded-full font-medium transition-all duration-300 hover:shadow-lg")(href="/") 
+                        | Ir al Inicio
+                    a(class="bg-pink-400 text-white px-4 py-2 rounded-full font-medium transition-all duration-300 hover:bg-pink-500")(href="/acceso/salir") 
+                        | Salir
 
-        block contenido
-        
-        script(src="https://unpkg.com/aos@2.3.1/dist/aos.js")
-        script.
-            AOS.init();
-            
-            // Auto-hide flash messages after 5 seconds
-            setTimeout(() => {
-                const flashMessages = document.querySelectorAll('.flash-message');
-                flashMessages.forEach(msg => {
-                    msg.style.transition = 'opacity 0.5s ease';
-                    msg.style.opacity = '0';
-                    setTimeout(() => msg.remove(), 500);
-                });
-            }, 5000);
+        //- Contenedor principal con sidebar
+        .flex.min-h-screen
+            //- Sidebar
+            aside(class="w-64.bg-white.shadow-xl.p-6.border-r-4.border-purple-200")
+                nav.space-y-2
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/gestion/panel"
+                        class=pagina === 'Panel de Gestión' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Dashboard
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/gestion/reservas"
+                        class=pagina === 'Gestión de Reservas' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Reservas
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/gestion/cuentas"
+                        class=pagina === 'Gestión de Cuentas' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Usuarios
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/espacios"
+                        class=pagina === 'Gestión de Espacios' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Espacios
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/configuracion/horarios"
+                        class=pagina === 'Configuración de Horarios' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Horarios
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/gestion/informes"
+                        class=pagina === 'Informes y Reportes' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Informes
+                    a(class="block px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-purple-100 hover:scale-105")(
+                        href="/gestion/politicas"
+                        class=pagina === 'Políticas de Reservación' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-700'
+                    ) 
+                        | Políticas
+
+            //- Contenido principal
+            main.flex-1.p-8
+                //- Mensajes flash
+                if mensajes
+                    if mensajes.error && mensajes.error.length
+                        .mb-6
+                            each error in mensajes.error
+                                .bg-red-100.border-l-4.border-red-500.text-red-700.p-4.rounded-lg.shadow-md.mb-3
+                                    p.font-medium= error
+                    if mensajes.exito && mensajes.exito.length
+                        .mb-6
+                            each exito in mensajes.exito
+                                .bg-purple-100.border-l-4.border-purple-500.text-purple-700.p-4.rounded-lg.shadow-md.mb-3
+                                    p.font-medium= exito
+
+                block contenido

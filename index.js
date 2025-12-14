@@ -1,44 +1,61 @@
+// Importaciones de módulos principales
 import express from "express";
 import csurf from "csurf";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import flash from "connect-flash";
 import db from "./config/db.js";
-import usuarioRoutes from "./routes/usuariosRoutes.js";
-import reservasRoutes from "./routes/reservasRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import mesasRoutes from "./routes/mesasRoutes.js";
-import horariosRoutes from "./routes/horariosRoutes.js";
-import misReservasRoutes from "./routes/misReservasRoutes.js";
-import { identificarUsuario } from "./middleware/identificarUsuario.js";
 
-// Variable to track DB connection status
-let isDbConnected = false;
+// Importación de enrutadores
+import enrutadorAcceso from "./routes/usuariosRoutes.js";
+import enrutadorCitas from "./routes/reservasRoutes.js";
+import enrutadorGestion from "./routes/adminRoutes.js";
+import enrutadorEspacios from "./routes/mesasRoutes.js";
+import enrutadorHorarios from "./routes/horariosRoutes.js";
+import enrutadorMisReservas from "./routes/misReservasRoutes.js";
+import enrutadorPoliticas from "./routes/politicasRoutes.js";
 
-// Crear APP
-const app = express();
+// Importación de middleware
+import { reconocerSesionActiva } from "./middleware/identificarUsuario.js";
 
-// Habilitar lectura de los forms
-app.use(express.urlencoded({ extended: true }));
+/**
+ * Variable para rastrear el estado de conexión a la base de datos
+ * Se actualiza después de intentar la conexión
+ */
+let estadoConexionBaseDatos = false;
 
-// Habilitar el Cookie Parser
-app.use(cookieParser());
+/**
+ * Crear instancia de la aplicación Express
+ * Esta es la aplicación web principal del sistema
+ */
+const aplicacionWeb = express();
 
-// Configurar sesiones
-app.use(session({
-  secret: process.env.SECRET_KEY || 'mi_secreto_super_seguro',
+/**
+ * Configuración de Middlewares
+ * Se configuran en orden específico para el correcto funcionamiento
+ */
+
+// Habilitar lectura de datos de formularios (URL-encoded)
+aplicacionWeb.use(express.urlencoded({ extended: true }));
+
+// Habilitar el analizador de cookies
+aplicacionWeb.use(cookieParser());
+
+// Configurar sesiones de usuario
+aplicacionWeb.use(session({
+  secret: process.env.SECRET_KEY || 'clave_secreta_super_segura',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24 // 24 horas
+    maxAge: 1000 * 60 * 60 * 24 // Duración: 24 horas
   }
 }));
 
-// Habilitar flash messages
-app.use(flash());
+// Habilitar mensajes flash para notificaciones
+aplicacionWeb.use(flash());
 
-// Middleware para pasar mensajes flash a las vistas
-app.use((req, res, next) => {
+// Middleware para pasar mensajes flash a todas las vistas
+aplicacionWeb.use((req, res, next) => {
   res.locals.mensajes = {
     error: req.flash('error'),
     exito: req.flash('exito')
@@ -46,44 +63,79 @@ app.use((req, res, next) => {
   next();
 });
 
-// Habiliar el CSRF
-app.use(csurf({ cookie: true }));
+// Habilitar protección CSRF (Cross-Site Request Forgery)
+aplicacionWeb.use(csurf({ cookie: true }));
 
-// Conexion a la DB
+/**
+ * Conexión a la Base de Datos
+ * Intenta conectar y sincronizar con la base de datos MySQL
+ */
 try {
   await db.authenticate();
-  await db.sync({ alter: true }); // alter: true para añadir nuevas columnas
-  console.log("La conexion es correcta a la DB");
-  isDbConnected = true;
-} catch (error) {
-  console.error("No se puede conectar", error);
-  isDbConnected = false;
+  await db.sync({ alter: true }); // Sincronizar modelos con la BD
+  console.log("✓ Conexión exitosa a la base de datos");
+  estadoConexionBaseDatos = true;
+} catch (errorConexion) {
+  console.error("✗ Error al conectar con la base de datos:", errorConexion);
+  estadoConexionBaseDatos = false;
 }
 
-// Habilitar Pug
-app.set("view engine", "pug");
-app.set("views", "./views");
+/**
+ * Configuración del Motor de Plantillas
+ * Utiliza Pug para renderizar las vistas
+ */
+aplicacionWeb.set("view engine", "pug");
+aplicacionWeb.set("views", "./views");
 
-// Definir la ruta Public
-app.use(express.static("public"));
+/**
+ * Definir carpeta de archivos estáticos
+ * Sirve CSS, JavaScript, imágenes, etc.
+ */
+aplicacionWeb.use(express.static("public"));
 
-// Middleware para identificar usuario en todas las rutas
-app.use(identificarUsuario);
+/**
+ * Middleware para identificar usuario en todas las rutas
+ * Permite que las vistas sepan si hay un usuario autenticado
+ */
+aplicacionWeb.use(reconocerSesionActiva);
 
-// Routing
-app.use("/auth", usuarioRoutes);
-app.use("/reservas", reservasRoutes);
-app.use("/mis-reservas", misReservasRoutes);
-app.use("/", adminRoutes);
-app.use("/", mesasRoutes);
-app.use("/", horariosRoutes);
+/**
+ * Configuración de Rutas de la Aplicación
+ * Cada grupo de rutas maneja una funcionalidad específica
+ */
 
-// Routing - Página principal
-app.get("/", (req, res) => {
-  // Obtener mensajes de éxito desde query params
+// Rutas de autenticación y gestión de cuentas
+aplicacionWeb.use("/acceso", enrutadorAcceso);
+
+// Rutas de gestión de reservas (anteriormente citas)
+aplicacionWeb.use("/reservas", enrutadorCitas);
+
+// Ruta para gestionar las reservas del usuario autenticado
+aplicacionWeb.use("/mis-reservas", enrutadorMisReservas);
+
+// Ruta pública para ver políticas de reservación (sin autenticación)
+aplicacionWeb.use("/politicas", enrutadorPoliticas);
+
+// Rutas del panel de gestión (admin y recepcionista)
+aplicacionWeb.use("/", enrutadorGestion);
+
+// Rutas de gestión de espacios comedor (mesas)
+aplicacionWeb.use("/", enrutadorEspacios);
+
+// Rutas de configuración de horarios
+aplicacionWeb.use("/", enrutadorHorarios);
+
+/**
+ * Ruta Principal - Página de Inicio
+ * Muestra la página principal del restaurante
+ */
+aplicacionWeb.get("/", (req, res) => {
+  // Obtener mensajes de éxito desde parámetros de consulta
   const { reserva, mensaje } = req.query;
 
   let mensajeExito = null;
+
+  // Si viene de una reserva exitosa, preparar mensaje
   if (reserva && mensaje === 'exito') {
     mensajeExito = {
       tipo: 'exito',
@@ -91,40 +143,47 @@ app.get("/", (req, res) => {
     };
   }
 
+  // Renderizar vista principal
   res.render("index", {
     title: "Inicio",
-    dbStatus: isDbConnected,
+    dbStatus: estadoConexionBaseDatos,
     pagina: "Inicio",
     usuario: req.usuario,
     mensajeExito
   });
 });
 
-// Definir el puerto
-const port = process.env.PORT || 3000;
+/**
+ * Configuración del Servidor
+ * Define el puerto y arranca el servidor
+ */
+const puertoServidor = process.env.PORT || 3000;
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`El servidor esta corriendo en el puerto: ${port}`);
+aplicacionWeb.listen(puertoServidor, '0.0.0.0', () => {
+  console.log(`✓ El servidor está corriendo en el puerto: ${puertoServidor}`);
 
-  // Mostrar IP local para acceso desde otros dispositivos
+  // Mostrar direcciones IP locales para acceso desde otros dispositivos
   import('os').then(os => {
-    const networkInterfaces = os.networkInterfaces();
-    const ips = [];
+    const interfacesRed = os.networkInterfaces();
+    const direccionesIP = [];
 
-    Object.keys(networkInterfaces).forEach((interfaceName) => {
-      networkInterfaces[interfaceName].forEach((iface) => {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          ips.push(iface.address);
+    // Recorrer todas las interfaces de red
+    Object.keys(interfacesRed).forEach((nombreInterfaz) => {
+      interfacesRed[nombreInterfaz].forEach((interfaz) => {
+        // Filtrar solo direcciones IPv4 no internas
+        if (interfaz.family === 'IPv4' && !interfaz.internal) {
+          direccionesIP.push(interfaz.address);
         }
       });
     });
 
-    if (ips.length > 0) {
-      console.log('\nPara probar en tu teléfono, usa una de estas direcciones:');
-      ips.forEach(ip => {
-        console.log(`http://${ip}:${port}`);
+    // Mostrar direcciones disponibles
+    if (direccionesIP.length > 0) {
+      console.log('\\nPara acceder desde otros dispositivos en la misma red:');
+      direccionesIP.forEach(ip => {
+        console.log(`  → http://${ip}:${puertoServidor}`);
       });
-      console.log('\nAsegúrate de que tu teléfono y computadora estén en la misma red WiFi.');
+      console.log('\\nAsegúrate de que los dispositivos estén en la misma red WiFi.\\n');
     }
   });
 });

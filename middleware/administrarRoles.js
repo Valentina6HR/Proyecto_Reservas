@@ -1,17 +1,28 @@
-const rol = (...rolesPermitidos) => {
+/**
+ * Middleware para validar permisos por rol de usuario
+ * Verifica que el usuario autenticado tenga uno de los roles permitidos
+ * 
+ * @param {...string} rolesAutorizados - Lista de roles permitidos para acceder
+ * @returns {Function} Middleware de Express para validar roles
+ */
+const validarPermisosPorRol = (...rolesAutorizados) => {
     return (req, res, next) => {
+        // Verificar que el usuario esté autenticado
         if (!req.usuario) {
-            return res.redirect("/auth/login");
+            return res.redirect("/acceso/ingresar");
         }
 
-        if (!rolesPermitidos.includes(req.usuario.rol)) {
-            // Redirigir a la página de inicio con mensaje de error
+        // Verificar que el rol del usuario esté en la lista de roles autorizados
+        if (!rolesAutorizados.includes(req.usuario.rol)) {
+            // Usuario no tiene permisos, redirigir con mensaje de error
             req.flash('error', 'No tienes permisos para acceder a esta sección.');
             return res.redirect("/");
         }
 
+        // Usuario tiene permisos, continuar
         next();
     };
 };
 
-export default rol;
+// Exportar el middleware
+export default validarPermisosPorRol;

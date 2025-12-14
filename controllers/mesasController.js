@@ -1,217 +1,177 @@
-import Mesa from "../models/Mesas.js";
-import Reserva from "../models/Reservas.js";
-import { Op } from "sequelize";
+import { EspacioComedor } from "../models/index.js";
+import { validationResult } from "express-validator";
 
-const listarMesas = async (req, res) => {
+/**
+ * Muestra la lista de todos los espacios comedor
+ */
+const mostrarListaEspacios = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = 5; // 5 mesas por página
-        const offset = (page - 1) * limit;
-
-        const { count, rows: mesas } = await Mesa.findAndCountAll({
-            order: [["id", "ASC"]],
-            limit,
-            offset
+        const todosLosEspacios = await EspacioComedor.findAll({
+            order: [["zona", "ASC"], ["nombre", "ASC"]]
         });
-
-        const totalPages = Math.ceil(count / limit);
-
-        // Calcular ocupación de mesas para hoy
-        const hoy = new Date().toISOString().split("T")[0];
-        const horaActual = new Date().toTimeString().split(" ")[0]; // HH:MM:SS
-
-        // Obtener todas las mesas para estadísticas globales
-        const todasLasMesas = await Mesa.findAll();
-
-        // Calcular estado de ocupación para cada mesa
-        const mesasConOcupacion = await Promise.all(mesas.map(async (mesa) => {
-            const mesaData = mesa.toJSON();
-
-            // Buscar si hay reserva activa ahora mismo
-            const reservaActiva = await Reserva.findOne({
-                where: {
-                    id_mesa: mesa.id,
-                    fecha_reserva: hoy,
-                    estado: {
-                        [Op.in]: ["confirmada", "en_curso"]
-                    },
-                    hora_inicio: { [Op.lte]: horaActual },
-                    hora_fin: { [Op.gte]: horaActual }
-                }
-            });
-
-            // Buscar próxima reserva del día
-            const proximaReserva = await Reserva.findOne({
-                where: {
-                    id_mesa: mesa.id,
-                    fecha_reserva: hoy,
-                    estado: {
-                        [Op.in]: ["pendiente", "confirmada"]
-                    },
-                    hora_inicio: { [Op.gt]: horaActual }
-                },
-                order: [["hora_inicio", "ASC"]]
-            });
-
-            mesaData.ocupada = !!reservaActiva;
-            mesaData.proximaReserva = proximaReserva ? {
-                hora: proximaReserva.hora_inicio,
-                estado: proximaReserva.estado
-            } : null;
-
-            return mesaData;
-        }));
-
-        // Estadísticas globales de ocupación
-        let mesasOcupadasCount = 0;
-        let mesasDisponiblesCount = 0;
-
-        for (const mesa of todasLasMesas) {
-            const reservaActiva = await Reserva.findOne({
-                where: {
-                    id_mesa: mesa.id,
-                    fecha_reserva: hoy,
-                    estado: { [Op.in]: ["confirmada", "en_curso"] },
-                    hora_inicio: { [Op.lte]: horaActual },
-                    hora_fin: { [Op.gte]: horaActual }
-                }
-            });
-
-            if (reservaActiva) {
-                mesasOcupadasCount++;
-            } else if (mesa.estado === "activa") {
-                mesasDisponiblesCount++;
-            }
-        }
 
         res.render("mesas/index", {
+            pagina: "Gestión de Espacios",
             csrfToken: req.csrfToken(),
-            mesas: mesasConOcupacion,
             usuario: req.usuario,
-            messages: req.flash(),
-            currentPage: page,
-            totalPages,
-            totalMesas: count,
-            mesasOcupadas: mesasOcupadasCount,
-            mesasDisponibles: mesasDisponiblesCount,
-            fechaActual: hoy,
-            horaActual: horaActual.slice(0, 5)
+            espacios: todosLosEspacios
         });
-
     } catch (error) {
-        req.flash("error", "Error cargando mesas: " + error.message);
-        res.redirect("/panel/admin");
+        console.error("Error al cargar espacios:", error);
+        res.render("mesas/index", {
+            pagina: "Gestión de Espacios",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: [{ msg: "Error al cargar los espacios" }],
+            espacios: []
+        });
     }
 };
 
-const mostrarCrearMesa = (req, res) => {
+/**
+ * Muestra el formulario para crear o editar un espacio
+ */
+const mostrarFormularioEspacio = async (req, res) => {
+    const { id } = req.params;
+    let espacioExistente = null;
+
+    if (id) {
+        try {
+            espacioExistente = await EspacioComedor.findByPk(id);
+        } catch (error) {
+            console.error("Error al cargar espacio:", error);
+        }
+    }
+
     res.render("mesas/form", {
+        pagina: id ? "Editar Espacio" : "Nuevo Espacio",
         csrfToken: req.csrfToken(),
-        mesa: null,
         usuario: req.usuario,
-        action: "/mesas/crear",
-        messages: req.flash()
+        espacio: espacioExistente
     });
 };
 
-const crearMesa = async (req, res) => {
+/**
+ * Crea un nuevo espacio comedor en el sistema
+ */
+
+const crearEspacio = async (req, res) => {
+    // Validar resultados
+    let resultadoValidacion = validationResult(req);
+
+    if (!resultadoValidacion.isEmpty()) {
+        return res.render("mesas/form", {
+            pagina: "Nuevo Espacio",
+            csrfToken: req.csrfToken(),
+            usuario: req.usuario,
+            errores: resultadoValidacion.array(),
+            espacio: {
+                nombre: req.body.nombre,
+                capacidad: req.body.capacidad,
+                zona: req.body.zona,
+                estado: req.body.estado
+            }
+        });
+    }
+
+    const { nombre, capacidad, zona, estado } = req.body;
+
     try {
-        const { nombre, capacidad, zona, estado } = req.body;
-        await Mesa.create({
+        await EspacioComedor.create({
             nombre,
-            capacidad: Number(capacidad),
+            capacidad: parseInt(capacidad),
             zona,
             estado: estado || "activa"
         });
 
-        req.flash("exito", "Mesa creada correctamente");
-        res.redirect("/mesas");
+        req.flash('exito', 'Espacio creado exitosamente');
+        res.redirect("/espacios");
     } catch (error) {
-        req.flash("error", "Error creando mesa: " + error.message);
-        res.redirect("/mesas/crear");
+        console.error("Error al crear espacio:", error);
+        req.flash('error', 'Error al crear el espacio');
+        res.redirect("/espacios/crear");
     }
 };
 
-const mostrarEditarMesa = async (req, res) => {
-    try {
-        const mesa = await Mesa.findByPk(req.params.id);
-        if (!mesa) {
-            req.flash("error", "Mesa no encontrada");
-            return res.redirect("/mesas");
-        }
-        res.render("mesas/form", {
+/**
+ * Actualiza un espacio comedor existente
+ */
+const actualizarEspacio = async (req, res) => {
+    const { id } = req.params;
+
+    // Validar resultados
+    let resultadoValidacion = validationResult(req);
+
+    if (!resultadoValidacion.isEmpty()) {
+        return res.render("mesas/form", {
+            pagina: "Editar Espacio",
             csrfToken: req.csrfToken(),
-            mesa,
             usuario: req.usuario,
-            action: `/mesas/${mesa.id}/editar`,
-            messages: req.flash()
+            errores: resultadoValidacion.array(),
+            espacio: {
+                nombre: req.body.nombre,
+                capacidad: req.body.capacidad,
+                zona: req.body.zona,
+                estado: req.body.estado
+            }
         });
-
-    } catch (error) {
-        req.flash("error", "Error cargando mesa: " + error.message);
-        res.redirect("/mesas");
     }
-};
 
-const editarMesa = async (req, res) => {
+    const { nombre, capacidad, zona, estado } = req.body;
+
     try {
-        const { nombre, capacidad, zona, estado } = req.body;
-        const mesa = await Mesa.findByPk(req.params.id);
-        if (!mesa) {
-            req.flash("error", "Mesa no encontrada");
-            return res.redirect("/mesas");
+        const espacioEncontrado = await EspacioComedor.findByPk(id);
+
+        if (!espacioEncontrado) {
+            req.flash('error', 'Espacio no encontrado');
+            return res.redirect("/espacios");
         }
-        await mesa.update({
+
+        await espacioEncontrado.update({
             nombre,
-            capacidad: Number(capacidad),
+            capacidad: parseInt(capacidad),
             zona,
             estado
         });
 
-        req.flash("exito", "Mesa actualizada");
-        res.redirect("/mesas");
+        req.flash('exito', 'Espacio actualizado exitosamente');
+        res.redirect("/espacios");
     } catch (error) {
-        req.flash("error", "Error actualizando mesa: " + error.message);
-        res.redirect(`/mesas/${req.params.id}/editar`);
+        console.error("Error al actualizar espacio:", error);
+        req.flash('error', 'Error al actualizar el espacio');
+        res.redirect(`/espacios/${id}/editar`);
     }
 };
 
-const eliminarMesa = async (req, res) => {
+/**
+ * Elimina un espacio comedor del sistema
+ */
+const eliminarEspacio = async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const mesa = await Mesa.findByPk(req.params.id);
-        if (!mesa) {
-            req.flash("error", "Mesa no encontrada");
-            return res.redirect("/mesas");
+        const espacioEncontrado = await EspacioComedor.findByPk(id);
+
+        if (!espacioEncontrado) {
+            req.flash('error', 'Espacio no encontrado');
+            return res.redirect("/espacios");
         }
 
-        // Evitar eliminar si tiene reservas futuras
-        const hoy = new Date();
-        const reservasFuturas = await Reserva.count({
-            where: {
-                id_mesa: mesa.id,
-                fecha_reserva: { [Op.gte]: hoy.toISOString().split("T")[0] } // DATEONLY compare
-            }
-        });
-
-        if (reservasFuturas > 0) {
-            req.flash("error", "No se puede eliminar: la mesa tiene reservas futuras");
-            return res.redirect("/mesas");
-        }
-
-        await mesa.destroy();
-        req.flash("exito", "Mesa eliminada");
-        res.redirect("/mesas");
+        await espacioEncontrado.destroy();
+        req.flash('exito', 'Espacio eliminado exitosamente');
+        res.redirect("/espacios");
     } catch (error) {
-        req.flash("error", "Error eliminando mesa: " + error.message);
-        res.redirect("/mesas");
+        console.error("Error al eliminar espacio:", error);
+        req.flash('error', 'Error al eliminar el espacio');
+        res.redirect("/espacios");
     }
 };
 
+// Exportar funciones del controlador
 export {
-    listarMesas,
-    mostrarCrearMesa,
-    crearMesa,
-    mostrarEditarMesa,
-    editarMesa,
-    eliminarMesa
-}
+    mostrarListaEspacios,
+    mostrarFormularioEspacio,
+    crearEspacio,
+    actualizarEspacio,
+    eliminarEspacio
+};

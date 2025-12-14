@@ -1,23 +1,34 @@
 import { DataTypes } from "sequelize";
 import db from "../config/db.js";
 
-const Mesa = db.define(
+/**
+ * Modelo de Espacio Comedor
+ * Representa las mesas o espacios disponibles en el restaurante
+ * Incluye información sobre capacidad, ubicación y disponibilidad
+ */
+const EspacioComedor = db.define(
     "mesas",
     {
+        // Nombre identificador del espacio (ej: "Mesa 1", "VIP 3")
         nombre: {
             type: DataTypes.STRING,
             allowNull: false,
-            // Puede ser "Mesa 1", "Mesa 10", "VIP 3", etc.
         },
+
+        // Capacidad máxima de personas que puede acomodar
         capacidad: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+
+        // Zona o área donde se encuentra el espacio
+        // Valores posibles: "interior", "terraza", "barra", "privado"
         zona: {
             type: DataTypes.STRING,
             allowNull: true,
-            // Ej: "interior", "terraza", "barra", "privado"
         },
+
+        // Estado de disponibilidad del espacio
         estado: {
             type: DataTypes.ENUM("activa", "inactiva"),
             allowNull: false,
@@ -26,4 +37,5 @@ const Mesa = db.define(
     },
 );
 
-export default Mesa;
+// Exportar el modelo para su uso en otros módulos
+export default EspacioComedor;
